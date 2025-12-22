@@ -16,7 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../backend'))
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Track, Base
+from models import Track, Base, init_db
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -110,6 +110,13 @@ def process_dataset(tsv_path: str, output_dir: str, limit: int = None):
     
     # Ensure output directory exists
     Path(output_dir).mkdir(parents=True, exist_ok=True)
+    
+    # Initialize DB (ensure tables exist)
+    try:
+        print("Initializing Database schema...", flush=True)
+        init_db()
+    except Exception as e:
+        logger.error(f"Failed to initialize DB: {e}")
     
     s3_client = get_s3_client()
     db_session = get_db_session()
