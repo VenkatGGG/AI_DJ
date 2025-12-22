@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pgvector
+boto3
+python-dotenv
+requests
+pandas
+numpy
+tqdm
+# AI/ML
+transformers
+torch
+torchaudio
+faiss-cpu
+google-genai
