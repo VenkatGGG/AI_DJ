@@ -24,7 +24,14 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv(".env")
-print(f"Loaded keys: {[k for k in os.environ.keys() if 'S3' in k or 'DB' in k]}")
+load_dotenv(".env")
+# Debug: Print which keys are present (without values)
+required_keys = ["S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "S3_ENDPOINT_URL", "S3_BUCKET_NAME", "DATABASE_URL"]
+missing_keys = [k for k in required_keys if not os.getenv(k)]
+if missing_keys:
+    print(f"CRITICAL WARNING: Missing environment variables: {missing_keys}", flush=True)
+else:
+    print("All required environment variables found.", flush=True)
 
 # S3 / Railway Object Store Configuration
 S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
@@ -48,7 +55,13 @@ def get_s3_client():
 def get_db_session():
     if not DATABASE_URL:
         return None
-    engine = create_engine(DATABASE_URL)
+        
+    # SQLAlchemy 1.4+ requires postgresql:// scheme
+    url = DATABASE_URL
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+        
+    engine = create_engine(url)
     Session = sessionmaker(bind=engine)
     return Session()
 

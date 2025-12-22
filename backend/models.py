@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text
+from sqlalchemy import create_engine, Column, Integer, String, Text, text
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
@@ -23,13 +23,17 @@ def init_db():
     if not DATABASE_URL:
         print("DATABASE_URL not set. Skipping DB init.")
         return
+    
+    # SQLAlchemy 1.4+ requires postgresql:// scheme
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
         
     engine = create_engine(DATABASE_URL)
     
     # Create extension if not exists (requires superuser)
     try:
         with engine.connect() as conn:
-            conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             conn.commit()
     except Exception as e:
         print(f"Could not create vector extension (might need superuser): {e}")
