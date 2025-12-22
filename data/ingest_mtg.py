@@ -133,6 +133,19 @@ def process_dataset(tsv_path: str, output_dir: str, limit: int = None):
         if DATABASE_URL and 'railway.internal' in DATABASE_URL and 'RAILWAY_ENVIRONMENT' not in os.environ:
             logger.warning("Detected internal Railway DB URL while running locally. Connection will likely fail. Please use the TCP Proxy URL.")
 
+        # 0. Check DB first (Optimization)
+        if db_session:
+            try:
+                existing = db_session.query(Track).filter_by(id=track_id).first()
+                if existing:
+                    logger.info(f"Track {track_id} already in DB. Skipping.")
+                    continue
+            except Exception as e:
+                logger.error(f"DB Check Error for {track_id}: {e}")
+                # Optional: break or continue? Let's try to proceed if DB check fails, 
+                # but with rollback just in case connection is dead
+                db_session.rollback()
+
         filename = f"{track_id}.mp3"
         local_file_path = Path(output_dir) / filename
         s3_key = f"tracks/{filename}"
@@ -154,21 +167,16 @@ def process_dataset(tsv_path: str, output_dir: str, limit: int = None):
                 # 3. Insert to DB
                 if db_session:
                     try:
-                        # Check if exists
-                        existing = db_session.query(Track).filter_by(id=track_id).first()
-                        if not existing:
-                            new_track = Track(
-                                id=track_id,
-                                title=f"Track {track_id}", # Placeholder if title missing
-                                artist=str(row.get('artist_id', 'Unknown')),
-                                tags={}, # Populate if available
-                                audio_url=final_url
-                            )
-                            db_session.add(new_track)
-                            db_session.commit()
-                            logger.info(f"Track {track_id} metadata saved to DB.")
-                        else:
-                             logger.info(f"Track {track_id} already in DB.")
+                        new_track = Track(
+                            id=track_id,
+                            title=f"Track {track_id}", # Placeholder if title missing
+                            artist=str(row.get('artist_id', 'Unknown')),
+                            tags={}, # Populate if available
+                            audio_url=final_url
+                        )
+                        db_session.add(new_track)
+                        db_session.commit()
+                        logger.info(f"Track {track_id} metadata saved to DB.")
                     except Exception as e:
                         logger.error(f"DB Error for {track_id}: {e}")
                         db_session.rollback()
