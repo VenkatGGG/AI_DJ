@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node
+node_modules/
+.next/
+dist/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Data
+data/mtg-jamendo-dataset/
+temp_downloads/
