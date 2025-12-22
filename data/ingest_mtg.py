@@ -150,6 +150,7 @@ def process_dataset(tsv_path: str, output_dir: str, limit: int = None):
         if all([S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET_NAME]):
             final_url = upload_to_s3(s3_client, local_file_path, s3_key)
             if final_url:
+                print(f"UPLOADED: {final_url}", flush=True)  # Force stdout for immediate log visibility
                 # 3. Insert to DB
                 if db_session:
                     try:
