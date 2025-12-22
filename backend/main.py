@@ -1,7 +1,16 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 import os
+from .models import init_db
 
-app = FastAPI(title="Text2Tracks API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize DB on startup
+    print("Startup: Initializing Database...")
+    init_db()
+    yield
+
+app = FastAPI(title="Text2Tracks API", lifespan=lifespan)
 
 @app.get("/")
 def health_check():
