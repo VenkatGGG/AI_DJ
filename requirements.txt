@@ -15,5 +15,6 @@ tqdm
 transformers
 torch
 torchaudio
+librosa
 faiss-cpu
 google-genai
