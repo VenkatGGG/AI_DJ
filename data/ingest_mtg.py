@@ -16,7 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../backend'))
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Track, Base, init_db
+from models import Track, Base, init_db, get_db_session
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -52,18 +52,7 @@ def get_s3_client():
         region_name=S3_REGION_NAME
     )
 
-def get_db_session():
-    if not DATABASE_URL:
-        return None
-        
-    # SQLAlchemy 1.4+ requires postgresql:// scheme
-    url = DATABASE_URL
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
-        
-    engine = create_engine(url)
-    Session = sessionmaker(bind=engine)
-    return Session()
+# get_db_session imported from models
 
 def download_file(url, local_path, retries=3):
     """Download a file from a URL to a local path with retries."""

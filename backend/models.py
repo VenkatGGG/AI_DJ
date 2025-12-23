@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, text
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
 import os
@@ -40,6 +40,20 @@ def init_db():
 
     Base.metadata.create_all(engine)
     print("Database tables created.")
+
+def get_db_session():
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        return None
+        
+    # SQLAlchemy 1.4+ requires postgresql:// scheme
+    url = DATABASE_URL
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+        
+    engine = create_engine(url)
+    Session = sessionmaker(bind=engine)
+    return Session()
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
