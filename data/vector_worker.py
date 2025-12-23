@@ -1,9 +1,27 @@
 import boto3
 from botocore.config import Config
 
-# ... (rest of imports)
+import os
+import time
+import logging
+import torch
+import librosa
+import numpy as np
+import requests
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from transformers import ClapModel, ClapProcessor
+from dotenv import load_dotenv
 
-# ... (logging setup)
+import sys
+# Ensure backend import works
+sys.path.append(os.path.join(os.path.dirname(__file__), '../backend'))
+
+from models import Track, get_db_session
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 load_dotenv(".env")
 
@@ -86,7 +104,31 @@ def download_audio(url):
         logger.error(f"Download failed for {url}: {e}")
         return None
 
-# ... (generate_embedding function remains same)
+def generate_embedding(model, processor, audio_path):
+    """Generates audio embedding using CLAP."""
+    try:
+        # Load and resample audio
+        # CLAP expects 48kHz usually (check config, but 48k is standard for CLAP)
+        audio_array, sample_rate = librosa.load(audio_path, sr=48000)
+        
+        # Limit duration to 30s
+        max_duration = 30
+        if len(audio_array) > max_duration * sample_rate:
+            audio_array = audio_array[:max_duration * sample_rate]
+
+        # Process inputs
+        inputs = processor(audios=audio_array, sampling_rate=48000, return_tensors="pt", padding=True)
+        inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
+
+        with torch.no_grad():
+            outputs = model.get_audio_features(**inputs)
+        
+        # Retrieve embedding
+        embedding = outputs[0].cpu().numpy().tolist()
+        return embedding
+    except Exception as e:
+        logger.error(f"Inference failed for {audio_path}: {e}")
+        return None
 
 def process_queue():
     model, processor = load_model()
