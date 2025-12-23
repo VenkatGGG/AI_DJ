@@ -29,11 +29,13 @@ load_dotenv(".env")
 S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
 S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
 S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
+S3_REGION_NAME = os.getenv("S3_REGION_NAME", "auto")
+
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 
 # Model Configuration
 MODEL_ID = "laion/clap-htsat-unfused"
-DEVICE = "cpu" 
+DEVICE = "cpu"
 
 def get_s3_client():
     return boto3.client(
@@ -41,7 +43,11 @@ def get_s3_client():
         aws_access_key_id=S3_ACCESS_KEY_ID,
         aws_secret_access_key=S3_SECRET_ACCESS_KEY,
         endpoint_url=S3_ENDPOINT_URL,
-        config=Config(signature_version='s3v4')
+        region_name=S3_REGION_NAME,
+        config=Config(
+            signature_version='s3v4',
+            s3={'addressing_style': 'path'}
+        )
     )
 
 def get_presigned_url(s3_client, public_url):
